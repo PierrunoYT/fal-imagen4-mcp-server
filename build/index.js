@@ -4,14 +4,19 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { fal } from "@fal-ai/client";
 // Check for required environment variable
 const FAL_KEY = process.env.FAL_KEY;
+let falClient = null;
 if (!FAL_KEY) {
     console.error('FAL_KEY environment variable is required');
-    process.exit(1);
+    console.error('Please set your FAL API key: export FAL_KEY=your_token_here');
+    // Server continues running, no process.exit()
 }
-// Configure FAL client
-fal.config({
-    credentials: FAL_KEY
-});
+else {
+    // Configure FAL client
+    fal.config({
+        credentials: FAL_KEY
+    });
+    falClient = fal;
+}
 // Create MCP server
 const server = new McpServer({
     name: "fal-imagen4-server",
@@ -53,6 +58,16 @@ server.tool("imagen4_generate", {
         required: ["prompt"]
     }
 }, async (args) => {
+    // Check if FAL client is configured
+    if (!falClient) {
+        return {
+            content: [{
+                    type: "text",
+                    text: "Error: FAL_KEY environment variable is not set. Please configure your FAL API key."
+                }],
+            isError: true
+        };
+    }
     const { prompt, negative_prompt = "", aspect_ratio = "1:1", num_images = 1, seed } = args;
     try {
         // Prepare input for FAL API
@@ -158,6 +173,16 @@ server.tool("imagen4_generate_async", {
         required: ["prompt"]
     }
 }, async (args) => {
+    // Check if FAL client is configured
+    if (!falClient) {
+        return {
+            content: [{
+                    type: "text",
+                    text: "Error: FAL_KEY environment variable is not set. Please configure your FAL API key."
+                }],
+            isError: true
+        };
+    }
     const { prompt, negative_prompt = "", aspect_ratio = "1:1", num_images = 1, seed } = args;
     try {
         // Prepare input for FAL API
@@ -249,6 +274,15 @@ The images are ready to view and download from the provided URLs.`;
         };
     }
 });
+// Graceful shutdown handlers
+process.on('SIGINT', () => {
+    console.error('Received SIGINT, shutting down gracefully...');
+    process.exit(0);
+});
+process.on('SIGTERM', () => {
+    console.error('Received SIGTERM, shutting down gracefully...');
+    process.exit(0);
+});
 // Start the server
 async function main() {
     const transport = new StdioServerTransport();
@@ -257,6 +291,6 @@ async function main() {
 }
 main().catch((error) => {
     console.error('Server error:', error);
-    process.exit(1);
+    // Don't exit the process, let it continue running
 });
 //# sourceMappingURL=index.js.map

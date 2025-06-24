@@ -4,9 +4,7 @@
   "description": "MCP server for FAL Imagen 4 Ultra - High-quality AI image generation with Google's latest model",
   "type": "module",
   "main": "build/index.js",
-  "bin": {
-    "fal-imagen4": "./build/index.js"
-  },
+  "bin": "./build/index.js",
   "scripts": {
     "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
     "dev": "tsc --watch",
