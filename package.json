@@ -1,7 +1,7 @@
 {
   "name": "fal-imagen4-mcp-server",
   "version": "1.0.0",
-  "description": "MCP server for FAL Imagen 4 Ultra image generation",
+  "description": "MCP server for FAL Imagen 4 Ultra - High-quality AI image generation with Google's latest model",
   "type": "module",
   "main": "build/index.js",
   "bin": {
@@ -10,11 +10,35 @@
   "scripts": {
     "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
     "dev": "tsc --watch",
-    "start": "node build/index.js"
+    "start": "node build/index.js",
+    "test": "node test-server.js",
+    "get-path": "node get-path.js"
   },
-  "keywords": ["mcp", "imagen4", "fal", "image-generation", "ai"],
-  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PierrunoYT/fal-imagen4-mcp-server.git"
+  },
+  "homepage": "https://github.com/PierrunoYT/fal-imagen4-mcp-server#readme",
+  "bugs": {
+    "url": "https://github.com/PierrunoYT/fal-imagen4-mcp-server/issues"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "imagen4",
+    "fal",
+    "fal-ai",
+    "image-generation",
+    "ai",
+    "google",
+    "typescript",
+    "model-context-protocol"
+  ],
+  "author": "PierrunoYT",
   "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
     "@fal-ai/client": "^1.0.0",
     "@modelcontextprotocol/sdk": "^1.0.0",
