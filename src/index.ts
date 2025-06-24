@@ -3,6 +3,10 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { fal } from "@fal-ai/client";
+import * as fs from 'fs';
+import * as path from 'path';
+import * as https from 'https';
+import * as http from 'http';
 
 // Check for required environment variable
 const FAL_KEY = process.env.FAL_KEY;
@@ -29,6 +33,60 @@ interface FalImageResult {
     file_size?: number;
   }>;
   seed: number;
+}
+
+// Download image function
+async function downloadImage(url: string, filename: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    try {
+      const parsedUrl = new URL(url);
+      const client = parsedUrl.protocol === 'https:' ? https : http;
+      
+      // Create images directory if it doesn't exist
+      const imagesDir = path.join(process.cwd(), 'images');
+      if (!fs.existsSync(imagesDir)) {
+        fs.mkdirSync(imagesDir, { recursive: true });
+      }
+      
+      const filePath = path.join(imagesDir, filename);
+      const file = fs.createWriteStream(filePath);
+      
+      client.get(url, (response) => {
+        if (response.statusCode !== 200) {
+          reject(new Error(`Failed to download image: HTTP ${response.statusCode}`));
+          return;
+        }
+        
+        response.pipe(file);
+        
+        file.on('finish', () => {
+          file.close();
+          resolve(filePath);
+        });
+        
+        file.on('error', (err) => {
+          fs.unlink(filePath, () => {}); // Delete partial file
+          reject(err);
+        });
+      }).on('error', (err) => {
+        reject(err);
+      });
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+// Generate safe filename for images
+function generateImageFilename(prompt: string, index: number, seed: number): string {
+  const safePrompt = prompt
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/\s+/g, '_')
+    .substring(0, 50);
+  
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  return `imagen4_${safePrompt}_${seed}_${index}_${timestamp}.png`;
 }
 
 // Create MCP server
@@ -118,26 +176,59 @@ server.tool(
         },
       }) as { data: FalImageResult; requestId: string };
 
-      // Format response
-      const images = result.data.images.map((img, index) => ({
-        url: img.url,
-        index: index + 1,
-        content_type: img.content_type || "image/png",
-        file_size: img.file_size
-      }));
+      // Download images locally
+      console.error("Downloading images locally...");
+      const downloadedImages = [];
 
-      const responseText = `Successfully generated ${images.length} image(s) using Imagen 4 Ultra:
+      for (let i = 0; i < result.data.images.length; i++) {
+        const img = result.data.images[i];
+        const filename = generateImageFilename(prompt, i + 1, result.data.seed);
+        
+        try {
+          const localPath = await downloadImage(img.url, filename);
+          downloadedImages.push({
+            url: img.url,
+            localPath,
+            index: i + 1,
+            content_type: img.content_type || "image/png",
+            file_size: img.file_size
+          });
+          console.error(`Downloaded: ${filename}`);
+        } catch (downloadError) {
+          console.error(`Failed to download image ${i + 1}:`, downloadError);
+          // Still add the image info without local path
+          downloadedImages.push({
+            url: img.url,
+            localPath: null,
+            index: i + 1,
+            content_type: img.content_type || "image/png",
+            file_size: img.file_size
+          });
+        }
+      }
 
-${images.map(img => `Image ${img.index}: ${img.url}`).join('\n')}
+      // Format response with download information
+      const imageDetails = downloadedImages.map(img => {
+        let details = `Image ${img.index}:`;
+        if (img.localPath) {
+          details += `\n  Local Path: ${img.localPath}`;
+        }
+        details += `\n  Original URL: ${img.url}`;
+        return details;
+      }).join('\n\n');
 
-Generation Details:
-- Prompt: "${prompt}"
-- Negative Prompt: "${negative_prompt || 'None'}"
-- Aspect Ratio: ${aspect_ratio}
-- Seed: ${result.data.seed}
-- Request ID: ${result.requestId}
+      const responseText = `Successfully generated ${downloadedImages.length} image(s) using Imagen 4 Ultra:
 
-The images are ready to view and download from the provided URLs.`;
+Prompt: "${prompt}"
+Negative Prompt: "${negative_prompt || 'None'}"
+Aspect Ratio: ${aspect_ratio}
+Seed: ${result.data.seed}
+Request ID: ${result.requestId}
+
+Generated Images:
+${imageDetails}
+
+${downloadedImages.some(img => img.localPath) ? 'Images have been downloaded to the local \'images\' directory.' : 'Note: Local download failed, but original URLs are available.'}`;
 
       return {
         content: [
@@ -279,26 +370,59 @@ server.tool(
         throw new Error("Request timed out after 5 minutes");
       }
 
-      // Format response
-      const images = result.data.images.map((img: any, index: number) => ({
-        url: img.url,
-        index: index + 1,
-        content_type: img.content_type || "image/png",
-        file_size: img.file_size
-      }));
+      // Download images locally
+      console.error("Downloading images locally...");
+      const downloadedImages = [];
 
-      const responseText = `Successfully generated ${images.length} image(s) using Imagen 4 Ultra (Async):
+      for (let i = 0; i < result.data.images.length; i++) {
+        const img = result.data.images[i];
+        const filename = generateImageFilename(prompt, i + 1, result.data.seed);
+        
+        try {
+          const localPath = await downloadImage(img.url, filename);
+          downloadedImages.push({
+            url: img.url,
+            localPath,
+            index: i + 1,
+            content_type: img.content_type || "image/png",
+            file_size: img.file_size
+          });
+          console.error(`Downloaded: ${filename}`);
+        } catch (downloadError) {
+          console.error(`Failed to download image ${i + 1}:`, downloadError);
+          // Still add the image info without local path
+          downloadedImages.push({
+            url: img.url,
+            localPath: null,
+            index: i + 1,
+            content_type: img.content_type || "image/png",
+            file_size: img.file_size
+          });
+        }
+      }
 
-${images.map((img: any) => `Image ${img.index}: ${img.url}`).join('\n')}
+      // Format response with download information
+      const imageDetails = downloadedImages.map(img => {
+        let details = `Image ${img.index}:`;
+        if (img.localPath) {
+          details += `\n  Local Path: ${img.localPath}`;
+        }
+        details += `\n  Original URL: ${img.url}`;
+        return details;
+      }).join('\n\n');
 
-Generation Details:
-- Prompt: "${prompt}"
-- Negative Prompt: "${negative_prompt || 'None'}"
-- Aspect Ratio: ${aspect_ratio}
-- Seed: ${result.data.seed}
-- Request ID: ${request_id}
+      const responseText = `Successfully generated ${downloadedImages.length} image(s) using Imagen 4 Ultra (Async):
 
-The images are ready to view and download from the provided URLs.`;
+Prompt: "${prompt}"
+Negative Prompt: "${negative_prompt || 'None'}"
+Aspect Ratio: ${aspect_ratio}
+Seed: ${result.data.seed}
+Request ID: ${request_id}
+
+Generated Images:
+${imageDetails}
+
+${downloadedImages.some(img => img.localPath) ? 'Images have been downloaded to the local \'images\' directory.' : 'Note: Local download failed, but original URLs are available.'}`;
 
       return {
         content: [
