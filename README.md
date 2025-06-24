@@ -18,12 +18,13 @@ A Model Context Protocol (MCP) server that provides access to Google's Imagen 4 
 ## Features
 
 - **High-Quality Image Generation**: Uses Google's Imagen 4 Ultra model via FAL AI
+- **Automatic Image Download**: Generated images are automatically saved to local `images` directory
 - **Multiple Aspect Ratios**: Support for 1:1, 16:9, 9:16, 3:4, and 4:3
 - **Batch Generation**: Generate up to 4 images at once
 - **Reproducible Results**: Optional seed parameter for consistent outputs
 - **Dual Generation Methods**: Both real-time and async queue-based generation
 - **Negative Prompts**: Specify what to avoid in generated images
-- **Detailed Responses**: Returns image URLs, metadata, and generation details
+- **Detailed Responses**: Returns both local file paths and original URLs with metadata
 - **Robust Error Handling**: Graceful handling of missing API keys without server crashes
 - **Universal Portability**: Works anywhere with npx - no local installation required
 - **Enhanced Reliability**: Graceful shutdown handlers and comprehensive error reporting
@@ -171,6 +172,140 @@ Generate images using Imagen 4 Ultra with async queue processing for longer requ
 - Queue-based processing with status polling
 - 5-minute timeout with progress updates
 - Detailed logging of generation progress
+
+## 📥 **How Image Download Works**
+
+The FAL Imagen 4 MCP server automatically downloads generated images to your local machine. Here's the complete process:
+
+### **1. Image Generation Flow**
+1. **API Call**: Server calls FAL AI's Imagen 4 Ultra API
+2. **Response**: FAL returns temporary URLs for generated images
+3. **Auto-Download**: Server immediately downloads images to local storage
+4. **Response**: Returns both local paths and original URLs
+
+### **2. Download Implementation**
+
+#### **Download Function** ([`downloadImage`](src/index.ts:37-71)):
+```typescript
+async function downloadImage(url: string, filename: string): Promise<string> {
+  // 1. Parse the URL and determine HTTP/HTTPS client
+  const parsedUrl = new URL(url);
+  const client = parsedUrl.protocol === 'https:' ? https : http;
+  
+  // 2. Create 'images' directory if it doesn't exist
+  const imagesDir = path.join(process.cwd(), 'images');
+  if (!fs.existsSync(imagesDir)) {
+    fs.mkdirSync(imagesDir, { recursive: true });
+  }
+  
+  // 3. Create file write stream
+  const filePath = path.join(imagesDir, filename);
+  const file = fs.createWriteStream(filePath);
+  
+  // 4. Download and pipe to file
+  client.get(url, (response) => {
+    response.pipe(file);
+    // Handle completion and errors
+  });
+}
+```
+
+#### **Filename Generation** ([`generateImageFilename`](src/index.ts:74-82)):
+```typescript
+function generateImageFilename(prompt: string, index: number, seed: number): string {
+  // Creates safe filename: imagen4_prompt_seed_index_timestamp.png
+  const safePrompt = prompt
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')  // Remove special characters
+    .replace(/\s+/g, '_')         // Replace spaces with underscores
+    .substring(0, 50);            // Limit length
+  
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  return `imagen4_${safePrompt}_${seed}_${index}_${timestamp}.png`;
+}
+```
+
+### **3. Download Process in Action**
+
+#### **During Image Generation** (both sync and async tools):
+```typescript
+// After FAL API returns image URLs:
+console.error("Downloading images locally...");
+const downloadedImages = [];
+
+for (let i = 0; i < result.data.images.length; i++) {
+  const img = result.data.images[i];
+  const filename = generateImageFilename(prompt, i + 1, result.data.seed);
+  
+  try {
+    const localPath = await downloadImage(img.url, filename);
+    downloadedImages.push({
+      url: img.url,        // Original FAL URL
+      localPath,           // Local file path
+      index: i + 1         // Image number
+    });
+    console.error(`Downloaded: ${filename}`);
+  } catch (downloadError) {
+    // Graceful fallback - still provides original URL
+  }
+}
+```
+
+### **4. File Storage Details**
+
+#### **Directory Structure:**
+```
+your-project/
+├── images/                    # Auto-created directory
+│   ├── imagen4_mountain_landscape_123456_1_2025-06-24T18-30-45-123Z.png
+│   ├── imagen4_cute_robot_789012_1_2025-06-24T18-31-20-456Z.png
+│   └── ...
+```
+
+#### **Filename Format:**
+- **Prefix**: `imagen4_`
+- **Prompt**: First 50 chars, sanitized (alphanumeric + underscores)
+- **Seed**: Random seed used for generation
+- **Index**: Image number (for multiple images)
+- **Timestamp**: ISO timestamp for uniqueness
+- **Extension**: `.png`
+
+### **5. Response Format**
+
+The server returns both local and remote information:
+```
+Successfully generated 1 image(s) using Imagen 4 Ultra:
+
+Prompt: "a serene mountain landscape"
+Negative Prompt: "None"
+Aspect Ratio: 1:1
+Seed: 1234567890
+Request ID: req_abc123
+
+Generated Images:
+Image 1:
+  Local Path: /path/to/project/images/imagen4_a_serene_mountain_landscape_1234567890_1_2025-06-24T18-30-45-123Z.png
+  Original URL: https://v3.fal.media/files/...
+
+Images have been downloaded to the local 'images' directory.
+```
+
+### **6. Error Handling**
+
+- **Download Failures**: Server continues and provides original URL
+- **Directory Creation**: Auto-creates `images` folder if missing
+- **File Conflicts**: Timestamp ensures unique filenames
+- **Network Issues**: Graceful fallback with error messages
+
+### **7. Benefits of Local Download**
+
+✅ **Persistent Storage**: Images saved locally, not just temporary URLs
+✅ **Offline Access**: View images without internet connection
+✅ **Organized Storage**: All images in dedicated `images` directory
+✅ **Unique Naming**: No filename conflicts with timestamp system
+✅ **Fallback Safety**: Original URLs provided if download fails
+
+The download happens automatically after each generation, ensuring you always have local copies of your generated images!
 
 ## Example Usage
 
@@ -320,6 +455,13 @@ MIT License - see [LICENSE](LICENSE) file for details.
 5. Submit a pull request
 
 ## Changelog
+
+### v1.0.2 (Latest)
+- **📥 Added automatic image download**: Generated images are now automatically saved to local `images` directory
+- **🗂️ Smart filename generation**: Images saved with descriptive names including prompt, seed, and timestamp
+- **🔄 Enhanced responses**: Returns both local file paths and original URLs for maximum flexibility
+- **📁 Auto-directory creation**: Creates `images` folder automatically if it doesn't exist
+- **🛡️ Download error handling**: Graceful fallback to original URLs if local download fails
 
 ### v1.0.1
 - **🔧 Fixed connection drops**: Removed `process.exit()` calls that caused server crashes when `FAL_KEY` was missing
