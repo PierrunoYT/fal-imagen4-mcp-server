@@ -56,9 +56,37 @@ npm run build
 
 ## Configuration
 
-### Quick Setup Helper
+### 🚀 Recommended: Universal npx Configuration (Works Everywhere)
 
-Run the path helper to get the exact configuration for your system:
+**Best option for portability** - works on any machine with Node.js:
+
+```json
+{
+  "mcpServers": {
+    "fal-imagen4": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "https://github.com/PierrunoYT/fal-imagen4-mcp-server.git"
+      ],
+      "env": {
+        "FAL_KEY": "your-fal-api-key-here"
+      }
+    }
+  }
+}
+```
+
+**Benefits:**
+- ✅ **Universal Access**: Works on any machine with Node.js
+- ✅ **No Local Installation**: npx downloads and runs automatically
+- ✅ **Always Latest Version**: Pulls from GitHub repository
+- ✅ **Cross-Platform**: Windows, macOS, Linux compatible
+- ✅ **Settings Sync**: Works everywhere you use your MCP client
+
+### Alternative: Local Installation
+
+If you prefer to install locally, use the path helper:
 
 ```bash
 npm run get-path
@@ -66,7 +94,7 @@ npm run get-path
 
 This will output the complete MCP configuration with the correct absolute path.
 
-### For Claude Desktop
+#### For Claude Desktop
 
 Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
 
@@ -84,7 +112,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 }
 ```
 
-### For Kilo Code MCP Settings
+#### For Kilo Code MCP Settings
 
 Add to your MCP settings file at:
 `C:\Users\[username]\AppData\Roaming\Kilo-Code\MCP\settings\mcp_settings.json`
@@ -284,6 +312,12 @@ MIT License - see [LICENSE](LICENSE) file for details.
 5. Submit a pull request
 
 ## Changelog
+
+### v1.0.1
+- **🔧 Fixed connection drops**: Removed `process.exit()` calls that caused server crashes when `FAL_KEY` was missing
+- **🌍 Added portability**: Updated package.json for npx usage - now works universally without local installation
+- **✅ Enhanced error handling**: Added graceful shutdown handlers and null safety checks
+- **📝 Improved documentation**: Added npx configuration examples and troubleshooting guides
 
 ### v1.0.0
 - Initial release
