@@ -51,3 +51,6 @@ coverage/
 
 # Optional eslint cache
 .eslintcache
+
+#Ignore vscode AI rules
+.github\copilot-instructions.md
