@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "fal-imagen4": {
+      "command": "node",
+      "args": ["D:/Projects2/Imagen4MCP/build/index.js"],
+      "env": {
+        "FAL_KEY": "YOUR_FAL_API_KEY_HERE"
+      },
+      "disabled": false,
+      "alwaysAllow": []
+    }
+  }
+}

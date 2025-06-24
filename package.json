@@ -1,0 +1,27 @@
+{
+  "name": "fal-imagen4-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for FAL Imagen 4 Ultra image generation",
+  "type": "module",
+  "main": "build/index.js",
+  "bin": {
+    "fal-imagen4": "./build/index.js"
+  },
+  "scripts": {
+    "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
+    "dev": "tsc --watch",
+    "start": "node build/index.js"
+  },
+  "keywords": ["mcp", "imagen4", "fal", "image-generation", "ai"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@fal-ai/client": "^1.0.0",
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
