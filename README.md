@@ -1,6 +1,13 @@
 # FAL Imagen 4 MCP Server
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![MCP](https://img.shields.io/badge/MCP-Model%20Context%20Protocol-blue)](https://modelcontextprotocol.io/)
+[![FAL AI](https://img.shields.io/badge/FAL%20AI-Imagen%204%20Ultra-green)](https://fal.ai/)
+
 A Model Context Protocol (MCP) server that provides access to Google's Imagen 4 Ultra model through the FAL AI platform. This server enables high-quality image generation with enhanced detail, richer lighting, and fewer artifacts.
+
+> **🚀 Ready to use!** Pre-built executable included - no compilation required.
 
 ## Features
 
