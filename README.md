@@ -12,6 +12,8 @@ A Model Context Protocol (MCP) server that provides access to Google's Imagen 4 
 > **⚠️ Current Status**: The Imagen 4 Ultra model endpoint (`fal-ai/imagen4/preview/ultra`) is currently returning "Unprocessable Entity" errors. This may be due to the model being in preview status with restricted access or API changes. The server code is functional and ready to use once the API issue is resolved.
 
 > **🚀 Ready to use!** Pre-built executable included - no compilation required.
+>
+> **✅ Enhanced Reliability**: Server now handles missing API keys gracefully without crashes and includes robust error handling.
 
 ## Features
 
@@ -22,7 +24,9 @@ A Model Context Protocol (MCP) server that provides access to Google's Imagen 4 
 - **Dual Generation Methods**: Both real-time and async queue-based generation
 - **Negative Prompts**: Specify what to avoid in generated images
 - **Detailed Responses**: Returns image URLs, metadata, and generation details
-- **Error Handling**: Comprehensive error reporting and logging
+- **Robust Error Handling**: Graceful handling of missing API keys without server crashes
+- **Universal Portability**: Works anywhere with npx - no local installation required
+- **Enhanced Reliability**: Graceful shutdown handlers and comprehensive error reporting
 
 ## Prerequisites
 
@@ -204,10 +208,13 @@ with aspect ratio 21:9 and seed 12345 for reproducible results
 - **Async**: `fal-ai/imagen4/preview/ultra` (queue method)
 
 ### Error Handling
-- Environment variable validation
-- API error catching and reporting
-- Timeout handling for async requests
-- Detailed error messages with context
+- **Graceful API key handling**: Server continues running even without FAL_KEY set
+- **No crash failures**: Removed `process.exit()` calls that caused connection drops
+- **Null safety checks**: All tools validate API client availability before execution
+- **Graceful shutdown**: Proper SIGINT and SIGTERM signal handling
+- **API error catching**: Comprehensive error reporting with detailed context
+- **Timeout handling**: Robust async request management with progress updates
+- **User-friendly messages**: Clear error descriptions instead of technical crashes
 
 ## Development
 
@@ -256,11 +263,12 @@ This server uses the FAL AI platform, which charges per image generation. Check 
 ## Troubleshooting
 
 ### Server not appearing in MCP client
-1. Verify the path to `build/index.js` is correct and absolute
-2. Check that your FAL_KEY is set correctly in the environment variables
+1. **Recommended**: Use the npx configuration for universal compatibility
+2. If using local installation, verify the path to `build/index.js` is correct and absolute
 3. Ensure Node.js 18+ is installed: `node --version`
 4. Test server startup: `npm run test`
 5. Restart your MCP client (Claude Desktop, Kilo Code, etc.)
+6. **Note**: Server will start successfully even without FAL_KEY - check tool responses for API key errors
 
 ### Image generation failing
 1. **Current Known Issue**: The Imagen 4 Ultra endpoint is returning "Unprocessable Entity" errors. This appears to be an API-side issue, not a problem with the MCP server code.
