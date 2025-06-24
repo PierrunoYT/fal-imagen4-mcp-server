@@ -9,6 +9,8 @@ A Model Context Protocol (MCP) server that provides access to Google's Imagen 4 
 
 **🔗 Repository**: [https://github.com/PierrunoYT/fal-imagen4-mcp-server](https://github.com/PierrunoYT/fal-imagen4-mcp-server)
 
+> **⚠️ Current Status**: The Imagen 4 Ultra model endpoint (`fal-ai/imagen4/preview/ultra`) is currently returning "Unprocessable Entity" errors. This may be due to the model being in preview status with restricted access or API changes. The server code is functional and ready to use once the API issue is resolved.
+
 > **🚀 Ready to use!** Pre-built executable included - no compilation required.
 
 ## Features
@@ -233,11 +235,21 @@ This server uses the FAL AI platform, which charges per image generation. Check 
 5. Restart your MCP client (Claude Desktop, Kilo Code, etc.)
 
 ### Image generation failing
-1. Verify your FAL API key is valid and has sufficient credits
-2. Check that your prompt follows FAL AI's content policy
-3. Try reducing the number of images or simplifying the prompt
-4. Use the async tool for complex requests
-5. Check the server logs for detailed error messages
+1. **Current Known Issue**: The Imagen 4 Ultra endpoint is returning "Unprocessable Entity" errors. This appears to be an API-side issue, not a problem with the MCP server code.
+2. Verify your FAL API key is valid and has sufficient credits
+3. Check that your prompt follows FAL AI's content policy
+4. Try reducing the number of images or simplifying the prompt
+5. Use the async tool for complex requests
+6. Check the server logs for detailed error messages
+
+### Current API Status Issues
+- **Imagen 4 Ultra Preview**: Currently experiencing "Unprocessable Entity" errors
+- **Possible Causes**:
+  - Model may be in restricted preview access
+  - API endpoint changes or temporary unavailability
+  - Account access limitations for preview models
+- **Workaround**: Monitor [FAL AI's documentation](https://fal.ai/models/fal-ai/imagen4/preview) for updates
+- **Alternative**: Consider using other FAL models like FLUX or Stable Diffusion 3.5 until Imagen 4 Ultra is fully available
 
 ### Build issues
 If you need to rebuild the server:
