@@ -7,6 +7,8 @@
 
 A Model Context Protocol (MCP) server that provides access to Google's Imagen 4 Ultra model through the FAL AI platform. This server enables high-quality image generation with enhanced detail, richer lighting, and fewer artifacts.
 
+**🔗 Repository**: [https://github.com/PierrunoYT/fal-imagen4-mcp-server](https://github.com/PierrunoYT/fal-imagen4-mcp-server)
+
 > **🚀 Ready to use!** Pre-built executable included - no compilation required.
 
 ## Features
